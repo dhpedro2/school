@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script>
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+    
+        function checkAuthentication() {
+            const authenticated = getCookie("authenticated");
+            if (authenticated !== "true") {
+                window.location.href = "login.html"; // Redireciona para a página de login
+            }
+        }
+    
+        window.onload = checkAuthentication;
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tarefas</title>
+    <style>
+        body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+h1 {
+    text-align: center;
+    color: #007bff;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #007bff;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+td {
+    background-color: #fff;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button.edit, button.save {
+    margin-right: 10px;
+}
+
+button.view.hidden, input.edit.hidden {
+    display: none;
+}
+
+input[type="text"], input[type="date"] {
+    width: calc(100% - 20px);
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.back-button {
+    display: inline-block;
+    margin: 20px 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+#addTaskBtn {
+    display: block;
+    margin: 20px auto;
+    font-size: 24px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    line-height: 30px;
+    text-align: center;
+}
+
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-button">Voltar</a>
+    <h1>Lista de Tarefas</h1>
+    <table id="taskTable">
+        <thead>
+            <tr>
+                <th>Fazer</th>
+                <th>Prazo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Tarefas serão adicionadas aqui -->
+        </tbody>
+    </table>
+    <button id="addTaskBtn">+</button>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script>
+        // Configuração do Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
+            authDomain: "zaca-546e8.firebaseapp.com",
+            databaseURL: "https://zaca-546e8.firebaseio.com",
+            projectId: "zaca-546e8",
+            storageBucket: "zaca-546e8.appspot.com",
+            messagingSenderId: "667103911535",
+            appId: "1:667103911535:web:5d3004035ddf7d14e8379a",
+            measurementId: "G-8KSP67E4CB"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+
+        var taskTable = document.querySelector('#taskTable tbody');
+        var addTaskBtn = document.getElementById('addTaskBtn');
+
+        function formatDateToInput(date) {
+            if (!date) return '';
+            const [day, month, year] = date.split('/');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDateToDisplay(date) {
+            if (!date) return '';
+            const [year, month, day] = date.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function createTableCell(content, isEditable, key, type = 'text') {
+            const cell = document.createElement('td');
+            cell.innerHTML = isEditable
+                ? `<input type="${type}" value="${content}" class="edit hidden"><span class="view">${content}</span>`
+                : content;
+            return cell;
+        }
+
+        function createActionButtons(key) {
+            const cell = document.createElement('td');
+            cell.innerHTML = `
+                <button class="edit hidden" onclick="saveTask(this, '${key}')">Salvar</button>
+                <button class="view" onclick="editTask(this)">Editar</button>
+                <button class="view" onclick="removeTask('${key}')">Remover</button>
+            `;
+            return cell;
+        }
+
+        function addTaskRow(task, key) {
+            const row = document.createElement('tr');
+            row.dataset.key = key;
+            row.appendChild(createTableCell(task.fazer, true, key));
+            row.appendChild(createTableCell(formatDateToDisplay(task.data), true, key, 'date'));
+            row.appendChild(createActionButtons(key));
+            taskTable.appendChild(row);
+        }
+
+        function editTask(button) {
+            const row = button.closest('tr');
+            row.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+            row.querySelectorAll('.edit').forEach(el => el.classList.remove('hidden'));
+        }
+
+        function saveTask(button, key) {
+            const row = button.closest('tr');
+            const fazer = row.cells[0].querySelector('input').value;
+            const dataInput = row.cells[1].querySelector('input');
+            const data = dataInput.value;
+            const formattedDate = formatDateToDisplay(data);
+
+            database.ref('tasks/' + key).set({ fazer: fazer, data: data });
+
+            row.cells[0].querySelector('.view').innerText = fazer;
+            row.cells[1].querySelector('.view').innerText = formattedDate;
+
+            row.querySelectorAll('.view').forEach(el => el.classList.remove('hidden'));
+            row.querySelectorAll('.edit').forEach(el => el.classList.add('hidden'));
+        }
+
+        function removeTask(key) {
+            database.ref('tasks/' + key).remove();
+        }
+
+        addTaskBtn.addEventListener('click', function() {
+            const key = database.ref().child('tasks').push().key;
+            database.ref('tasks/' + key).set({ fazer: '', data: '' });
+        });
+
+        database.ref('tasks').on('child_added', function(snapshot) {
+            if (!document.querySelector(`tr[data-key='${snapshot.key}']`)) {
+                addTaskRow(snapshot.val(), snapshot.key);
+            }
+        });
+
+        database.ref('tasks').on('child_changed', function(snapshot) {
+            const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
+            const task = snapshot.val();
+            row.cells[0].querySelector('.view').innerText = task.fazer;
+            row.cells[1].querySelector('.view').innerText = formatDateToDisplay(task.data);
+        });
+
+        database.ref('tasks').on('child_removed', function(snapshot) {
+            const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
+            if (row) row.remove();
+        });
+    </script>
+</body>
+</html>
