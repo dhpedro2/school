@@ -222,9 +222,7 @@ apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
         }
 
         database.ref('tasks').on('child_added', function(snapshot) {
-            if (!document.querySelector(`tr[data-key='${snapshot.key}']`)) {
-                addTaskRow(snapshot.val(), snapshot.key);
-            }
+            addTaskRow(snapshot.val(), snapshot.key);
         });
 
         database.ref('tasks').on('child_changed', function(snapshot) {
