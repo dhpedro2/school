@@ -221,8 +221,16 @@ apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
             });
         }
 
+        // Carrega as tarefas quando a página é carregada
+        window.onload = function() {
+            loadTasks();
+        }
+
+        // Eventos para refletir mudanças em tempo real
         database.ref('tasks').on('child_added', function(snapshot) {
-            addTaskRow(snapshot.val(), snapshot.key);
+            if (!document.querySelector(`tr[data-key='${snapshot.key}']`)) {
+                addTaskRow(snapshot.val(), snapshot.key);
+            }
         });
 
         database.ref('tasks').on('child_changed', function(snapshot) {
@@ -236,8 +244,6 @@ apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
             const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
             if (row) row.remove();
         });
-
-        window.onload = loadTasks;  // Carrega as tarefas quando a página é carregada
     </script>
 </body>
 </html>
