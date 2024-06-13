@@ -12,14 +12,14 @@
             }
             return null;
         }
-    
+
         function checkAuthentication() {
             const authenticated = getCookie("authenticated");
             if (authenticated !== "true") {
                 window.location.href = "login.html"; // Redireciona para a página de login
             }
         }
-    
+
         window.onload = checkAuthentication;
     </script>
     <meta charset="UTF-8">
@@ -92,19 +92,6 @@ input[type="text"], input[type="date"] {
     border-radius: 5px;
 }
 
-.back-button {
-    display: inline-block;
-    margin: 20px 0;
-    padding: 10px 20px;
-    font-size: 16px;
-    color: white;
-    background-color: #007BFF;
-    border: none;
-    border-radius: 5px;
-    text-decoration: none;
-    cursor: pointer;
-}
-
 .hidden {
     display: none;
 }
@@ -117,19 +104,16 @@ input[type="text"], input[type="date"] {
     width: 50px;
     height: 50px;
     line-height: 30px;
-    text-align: center;
 }
-
     </style>
 </head>
 <body>
-    <a href="../index.html" class="back-button">Voltar</a>
-    <h1>Lista de Tarefas</h1>
+    <h1>Lista de Tarefas Compartilhada</h1>
     <table id="taskTable">
         <thead>
             <tr>
                 <th>Fazer</th>
-                <th>Prazo</th>
+                <th>Data</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -144,25 +128,15 @@ input[type="text"], input[type="date"] {
     <script>
         // Configuração do Firebase
         var firebaseConfig = {
-            apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
-            authDomain: "zaca-546e8.firebaseapp.com",
-            databaseURL: "https://zaca-546e8.firebaseio.com",
-            projectId: "zaca-546e8",
-            storageBucket: "zaca-546e8.appspot.com",
-            messagingSenderId: "667103911535",
-            appId: "1:667103911535:web:5d3004035ddf7d14e8379a",
-            measurementId: "G-8KSP67E4CB"
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            databaseURL: "SEU_DATABASE_URL",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
         };
         firebase.initializeApp(firebaseConfig);
-        var database = firebase.database();
-
-        var taskTable = document.querySelector('#taskTable tbody');
-        var addTaskBtn = document.getElementById('addTaskBtn');
-
-        function formatDateToInput(date) {
-            if (!date) return '';
-            const [day, month, year] = date.split('/');
-            return `${year}-${month}-${day}`;
         var database = firebase.database();
 
         var taskTable = document.querySelector('#taskTable tbody');
@@ -266,6 +240,5 @@ input[type="text"], input[type="date"] {
 
         window.onload = loadTasks;  // Carrega as tarefas quando a página é carregada
     </script>
-
 </body>
 </html>
