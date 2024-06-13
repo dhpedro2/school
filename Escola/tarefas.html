@@ -163,6 +163,15 @@ input[type="text"], input[type="date"] {
             if (!date) return '';
             const [day, month, year] = date.split('/');
             return `${year}-${month}-${day}`;
+        var database = firebase.database();
+
+        var taskTable = document.querySelector('#taskTable tbody');
+        var addTaskBtn = document.getElementById('addTaskBtn');
+
+        function formatDateToInput(date) {
+            if (!date) return '';
+            const [day, month, year] = date.split('/');
+            return `${year}-${month}-${day}`;
         }
 
         function formatDateToDisplay(date) {
@@ -171,7 +180,7 @@ input[type="text"], input[type="date"] {
             return `${day}/${month}/${year}`;
         }
 
-        function createTableCell(content, isEditable, key, type = 'text') {
+        function createTableCell(content, isEditable, type = 'text') {
             const cell = document.createElement('td');
             cell.innerHTML = isEditable
                 ? `<input type="${type}" value="${content}" class="edit hidden"><span class="view">${content}</span>`
@@ -192,8 +201,8 @@ input[type="text"], input[type="date"] {
         function addTaskRow(task, key) {
             const row = document.createElement('tr');
             row.dataset.key = key;
-            row.appendChild(createTableCell(task.fazer, true, key));
-            row.appendChild(createTableCell(formatDateToDisplay(task.data), true, key, 'date'));
+            row.appendChild(createTableCell(task.fazer, true));
+            row.appendChild(createTableCell(formatDateToDisplay(task.data), true, 'date'));
             row.appendChild(createActionButtons(key));
             taskTable.appendChild(row);
         }
@@ -209,12 +218,11 @@ input[type="text"], input[type="date"] {
             const fazer = row.cells[0].querySelector('input').value;
             const dataInput = row.cells[1].querySelector('input');
             const data = dataInput.value;
-            const formattedDate = formatDateToDisplay(data);
 
             database.ref('tasks/' + key).set({ fazer: fazer, data: data });
 
             row.cells[0].querySelector('.view').innerText = fazer;
-            row.cells[1].querySelector('.view').innerText = formattedDate;
+            row.cells[1].querySelector('.view').innerText = formatDateToDisplay(data);
 
             row.querySelectorAll('.view').forEach(el => el.classList.remove('hidden'));
             row.querySelectorAll('.edit').forEach(el => el.classList.add('hidden'));
@@ -228,6 +236,15 @@ input[type="text"], input[type="date"] {
             const key = database.ref().child('tasks').push().key;
             database.ref('tasks/' + key).set({ fazer: '', data: '' });
         });
+
+        function loadTasks() {
+            taskTable.innerHTML = '';  // Limpa a tabela antes de carregar as tarefas
+            database.ref('tasks').once('value', function(snapshot) {
+                snapshot.forEach(function(childSnapshot) {
+                    addTaskRow(childSnapshot.val(), childSnapshot.key);
+                });
+            });
+        }
 
         database.ref('tasks').on('child_added', function(snapshot) {
             if (!document.querySelector(`tr[data-key='${snapshot.key}']`)) {
@@ -246,6 +263,9 @@ input[type="text"], input[type="date"] {
             const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
             if (row) row.remove();
         });
+
+        window.onload = loadTasks;  // Carrega as tarefas quando a página é carregada
     </script>
+
 </body>
 </html>
