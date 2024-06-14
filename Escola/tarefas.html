@@ -27,87 +27,104 @@
     <title>Lista de Tarefas</title>
     <style>
         body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-    line-height: 1.6;
-}
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
 
-h1 {
-    text-align: center;
-    color: #007bff;
-}
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
 
-th, td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
 
-th {
-    background-color: #007bff;
-    color: #fff;
-    text-transform: uppercase;
-}
+        th {
+            background-color: #007bff;
+            color: #fff;
+            text-transform: uppercase;
+        }
 
-td {
-    background-color: #fff;
-}
+        td {
+            background-color: #fff;
+        }
 
-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.edit, button.save {
+            margin-right: 10px;
+        }
+
+        button.view.hidden, input.edit.hidden {
+            display: none;
+        }
+
+        input[type="text"], input[type="date"] {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #addTaskBtn {
+            display: block;
+            margin: 20px auto;
+            font-size: 24px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            line-height: 30px;
+        }
+        .back-button {
+    display: inline-block;
+    margin: 20px 0;
     padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
     cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+    font: 1em sans-serif;
 }
-
-button:hover {
+.back-button:hover {
     background-color: #0056b3;
-}
-
-button.edit, button.save {
-    margin-right: 10px;
-}
-
-button.view.hidden, input.edit.hidden {
-    display: none;
-}
-
-input[type="text"], input[type="date"] {
-    width: calc(100% - 20px);
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-.hidden {
-    display: none;
-}
-
-#addTaskBtn {
-    display: block;
-    margin: 20px auto;
-    font-size: 24px;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    line-height: 30px;
 }
     </style>
 </head>
 <body>
+    <a href="../index.html" class="back-button">Voltar</a>
     <h1>Lista de Tarefas</h1>
     <table id="taskTable">
         <thead>
@@ -128,20 +145,26 @@ input[type="text"], input[type="date"] {
     <script>
         // Configuração do Firebase
         var firebaseConfig = {
-apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
-        authDomain: "zaca-546e8.firebaseapp.com",
-        databaseURL: "https://zaca-546e8.firebaseio.com",
-        projectId: "zaca-546e8",
-        storageBucket: "zaca-546e8.appspot.com",
-        messagingSenderId: "667103911535",
-        appId: "1:667103911535:web:5d3004035ddf7d14e8379a",
-        measurementId: "G-8KSP67E4CB"
+            apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
+            authDomain: "zaca-546e8.firebaseapp.com",
+            databaseURL: "https://zaca-546e8-default-rtdb.firebaseio.com/",
+            projectId: "zaca-546e8",
+            storageBucket: "zaca-546e8.appspot.com",
+            messagingSenderId: "667103911535",
+            appId: "1:667103911535:web:5d3004035ddf7d14e8379a",
+            measurementId: "G-8KSP67E4CB"
         };
         firebase.initializeApp(firebaseConfig);
         var database = firebase.database();
 
         var taskTable = document.querySelector('#taskTable tbody');
         var addTaskBtn = document.getElementById('addTaskBtn');
+
+        function formatDateToInput(date) {
+            if (!date) return '';
+            const [day, month, year] = date.split('/');
+            return `${year}-${month}-${day}`;
+        }
 
         function formatDateToDisplay(date) {
             if (!date) return '';
@@ -206,38 +229,36 @@ apiKey: "AIzaSyD6ynCgY60Qeu65mcMzwSwJ7v7CJRwNs4k",
             database.ref('tasks/' + key).set({ fazer: '', data: '' });
         });
 
-        function loadTasks() {
-            taskTable.innerHTML = '';  // Limpa a tabela antes de carregar as tarefas
-            database.ref('tasks').once('value', function(snapshot) {
-                snapshot.forEach(function(childSnapshot) {
-                    addTaskRow(childSnapshot.val(), childSnapshot.key);
-                });
-            });
-        }
-
-        // Carrega as tarefas quando a página é carregada
-        window.onload = function() {
-            loadTasks();
-        }
-
-        // Eventos para refletir mudanças em tempo real
         database.ref('tasks').on('child_added', function(snapshot) {
-            if (!document.querySelector(`tr[data-key='${snapshot.key}']`)) {
+            const existingRow = document.querySelector(`tr[data-key='${snapshot.key}']`);
+            if (!existingRow) {
                 addTaskRow(snapshot.val(), snapshot.key);
             }
         });
 
         database.ref('tasks').on('child_changed', function(snapshot) {
             const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
-            const task = snapshot.val();
-            row.cells[0].querySelector('.view').innerText = task.fazer;
-            row.cells[1].querySelector('.view').innerText = formatDateToDisplay(task.data);
+            if (row) {
+                const task = snapshot.val();
+                row.cells[0].querySelector('.view').innerText = task.fazer;
+                row.cells[1].querySelector('.view').innerText = formatDateToDisplay(task.data);
+            }
         });
 
         database.ref('tasks').on('child_removed', function(snapshot) {
             const row = document.querySelector(`tr[data-key='${snapshot.key}']`);
             if (row) row.remove();
         });
+
+        window.onload = function() {
+            // Carregar as tarefas apenas uma vez ao carregar a página
+            database.ref('tasks').once('value', function(snapshot) {
+                taskTable.innerHTML = '';  // Limpa a tabela antes de carregar as tarefas
+                snapshot.forEach(function(childSnapshot) {
+                    addTaskRow(childSnapshot.val(), childSnapshot.key);
+                });
+            });
+        };
     </script>
 </body>
 </html>
