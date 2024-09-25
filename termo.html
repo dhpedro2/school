@@ -24,10 +24,9 @@
     </div>
 
     <script>
-    fetch('https://termo.pt/index.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('conteudo-externo').innerHTML = data;
+    fetch('https://termo.pt/index.html', { mode: 'no-cors' })
+      .then(response => {
+        document.getElementById('conteudo-externo').innerHTML = "Requisição enviada, mas o conteúdo não pode ser acessado por CORS.";
       })
       .catch(error => {
         console.error('Erro ao buscar o conteúdo: ', error);
