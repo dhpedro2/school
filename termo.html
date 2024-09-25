@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conteúdo Externo</title>
+    <title>Conteúdo Externo via Proxy</title>
     <style>
         #conteudo-externo {
             border: 1px solid #ccc;
@@ -17,16 +17,19 @@
 </head>
 <body>
 
-    <h1>Carregar Conteúdo Externo</h1>
+    <h1>Carregar Conteúdo Externo via Proxy</h1>
     
     <div id="conteudo-externo">
         Carregando conteúdo...
     </div>
 
     <script>
-    fetch('https://termo.pt/index.html', { mode: 'no-cors' })
-      .then(response => {
-        document.getElementById('conteudo-externo').innerHTML = "Requisição enviada, mas o conteúdo não pode ser acessado por CORS.";
+    const urlExterno = 'https://termo.pt/index.html'; // URL do conteúdo externo
+
+    fetch(`https://cors-anywhere.herokuapp.com/${urlExterno}`)
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('conteudo-externo').innerHTML = data;
       })
       .catch(error => {
         console.error('Erro ao buscar o conteúdo: ', error);
