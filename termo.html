@@ -3,39 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conteúdo Externo via Proxy</title>
+    <title>Termo - Jogo</title>
     <style>
-        #conteudo-externo {
-            border: 1px solid #ccc;
-            padding: 20px;
-            width: 80%;
-            margin: 20px auto;
-            min-height: 200px;
+        body {
+            font-family: Arial, sans-serif;
             text-align: center;
+            background-color: #343a40; /* Fundo preto */
+            color: white; /* Texto branco */
         }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #495057; /* Cinza escuro */
+        }
+
+        h1 {
+            color: #f8f9fa; /* Título em branco */
+        }
+
+        .letter {
+            display: inline-block;
+            width: 25px; /* Reduzido */
+            height: 25px; /* Reduzido */
+            margin: 5px;
+            border: 1px solid #f8f9fa; /* Borda branca */
+            border-radius: 5px;
+            line-height: 25px; /* Ajustado para o novo tamanho */
+            font-size: 18px; /* Reduzido */
+            text-align: center;
+            vertical-align: middle;
+            background-color: #495057; /* Fundo das letras */
+            color: white; /* Letras brancas */
+            box-sizing: border-box; /* Para incluir a borda no tamanho total */
+        }
+
+        .correct {
+            background-color: #28a745; /* Verde */
+            color: white;
+        }
+
+        .present {
+            background-color: #ffc107; /* Amarelo */
+            color: black;
+        }
+
+        .absent {
+            background-color: #dc3545; /* Vermelho */
+            color: white;
+        }
+
+        .row {
+            margin-bottom: 10px;
+        }
+
+        #message {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            margin-top: 20px;
+        }
+
+        .key {
+            padding: 5px; /* Menor espaço interno */
+            margin: 2px;
+            border: 1px solid #f8f9fa; /* Borda branca */
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #6c757d; /* Cinza */
+            transition: background-color 0.3s;
+            text-align: center;
+            width: 40px; /* Aumentada para maior largura */
+            height: 30px; /* Mantido */
+            color: white; /* Letras brancas */
+            box-sizing: border-box; /* Para incluir a borda no tamanho total */
+        }
+
+        .key:hover {
+            background-color: #adb5bd; /* Cinza claro ao passar o mouse */
+        }
+
+        .key:active {
+            background-color: #495057; /* Cinza escuro ao clicar */
+        }
+        .navigate-button {
+            margin-bottom: 20px; /* Espaço abaixo do botão */
+            padding: 10px 15px; /* Espaço interno do botão */
+            border: none; /* Remove borda padrão */
+            border-radius: 5px; /* Arredondar bordas */
+            background-color: #007bff; /* Cor de fundo do botão */
+            color: white; /* Cor do texto */
+            font-size: 16px; /* Tamanho da fonte */
+            cursor: pointer; /* Muda o cursor para pointer */
+            transition: background-color 0.3s; /* Efeito de transição */
+        }
+
+        .navigate-button:hover {
+            background-color: #0056b3; /* Cor ao passar o mouse */
+        }
+
     </style>
 </head>
 <body>
-
-    <h1>Carregar Conteúdo Externo via Proxy</h1>
-    
-    <div id="conteudo-externo">
-        Carregando conteúdo...
+    <div class="container">
+        <a href="index.html" id="navigateButton" class="navigate-button">Ir para a Página</a>
+        <h1>Termo - Jogo</h1>
+        <p>Você tem 6 tentativas para adivinhar a palavra de 5 letras!</p>
+        <div id="history"></div>
+        <div class="message" id="message"></div>
+        <div class="keyboard" id="keyboard"></div>
     </div>
 
     <script>
-    const urlExterno = 'https://termo.pt/index.html'; // URL do conteúdo externo
+        let wordToGuess = "";
+        let attempts = 0;
+        const maxAttempts = 6;
+        let validWords = [];
 
-    fetch(`https://cors-anywhere.herokuapp.com/${urlExterno}`)
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('conteudo-externo').innerHTML = data;
-      })
-      .catch(error => {
-        console.error('Erro ao buscar o conteúdo: ', error);
-        document.getElementById('conteudo-externo').innerHTML = "Erro ao carregar conteúdo.";
-      });
+        // Função para carregar palavras de um arquivo .txt
+        async function loadWords() {
+            const response = await fetch('palavras.txt');
+            const text = await response.text();
+            const words = text.split('\n').map(word => word.trim()).filter(word => word.length === 5);
+            return words;
+        }
+
+        // Função para iniciar o jogo
+        async function startGame() {
+            validWords = await loadWords();
+            wordToGuess = validWords[Math.floor(Math.random() * validWords.length)].toLowerCase();
+            attempts = 0;
+            document.getElementById("history").innerHTML = ""; // Limpa o histórico
+            document.getElementById("message").innerHTML = "";
+            createHistoryInputs();
+            createKeyboard();
+        }
+
+        // Função para criar os campos de entrada para o histórico
+        function createHistoryInputs() {
+            const historyDiv = document.getElementById("history");
+            for (let i = 0; i < maxAttempts; i++) {
+                const row = document.createElement("div");
+                row.className = "row";
+                for (let j = 0; j < 5; j++) {
+                    const letterInput = document.createElement("input");
+                    letterInput.type = "text";
+                    letterInput.maxLength = 1;
+                    letterInput.className = "letter";
+                    letterInput.dataset.row = i; // Para identificar a linha
+                    letterInput.dataset.index = j; // Para identificar a coluna
+                    letterInput.addEventListener('input', handleInput);
+                    row.appendChild(letterInput);
+                }
+                historyDiv.appendChild(row);
+            }
+        }
+
+        // Função para lidar com a entrada de letras
+        function handleInput(event) {
+            const input = event.target;
+            if (input.value) {
+                const nextInput = input.nextElementSibling;
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            } else {
+                const previousInput = input.previousElementSibling;
+                if (previousInput) {
+                    previousInput.focus();
+                }
+            }
+        }
+
+        // Função para criar o teclado virtual
+        function createKeyboard() {
+            const keyboardDiv = document.getElementById("keyboard");
+            keyboardDiv.innerHTML = "";
+
+            const keys = [
+                'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+                'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+                'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+            ];
+
+            keys.forEach(letter => {
+                const key = document.createElement("div");
+                key.className = "key";
+                key.textContent = letter;
+                key.onclick = () => addLetter(letter);
+                keyboardDiv.appendChild(key);
+            });
+
+            const enterKey = document.createElement("div");
+            enterKey.className = "key";
+            enterKey.textContent = "Enter";
+            enterKey.onclick = checkGuess;
+            keyboardDiv.appendChild(enterKey);
+
+            const backspaceKey = document.createElement("div");
+            backspaceKey.className = "key";
+            backspaceKey.textContent = "Apagar";
+            backspaceKey.onclick = removeLetter;
+            keyboardDiv.appendChild(backspaceKey);
+        }
+
+        // Função para adicionar uma letra
+        function addLetter(letter) {
+            const inputs = document.querySelectorAll(".row:nth-child(" + (attempts + 1) + ") input");
+            for (const input of inputs) {
+                if (!input.value) {
+                    input.value = letter;
+                    input.focus();
+                    return;
+                }
+            }
+        }
+
+        // Função para remover a última letra
+        function removeLetter() {
+            const inputs = document.querySelectorAll(".row:nth-child(" + (attempts + 1) + ") input");
+            for (let i = inputs.length - 1; i >= 0; i--) {
+                if (inputs[i].value) {
+                    inputs[i].value = "";
+                    inputs[i].focus();
+                    return;
+                }
+            }
+        }
+
+        // Função para verificar a tentativa do usuário
+        function checkGuess() {
+            const guess = Array.from(document.querySelectorAll(".row:nth-child(" + (attempts + 1) + ") input"))
+                .map(input => input.value.toLowerCase()).join('');
+
+            // Verifica se a palavra está no dicionário
+            if (guess.length !== 5) {
+                alert("A palavra deve ter 5 letras.");
+                return;
+            }
+
+            // Verifica se a palavra é válida
+            if (!validWords.includes(guess)) {
+                alert("Palavra inválida! Tente outra.");
+                return;
+            }
+
+            attempts++;
+            const resultDiv = document.getElementById("message");
+            const inputs = document.querySelectorAll(".row:nth-child(" + attempts + ") input");
+
+            const wordToGuessLower = wordToGuess.toLowerCase();
+            let letterCount = {};
+
+            // Contar quantas vezes cada letra aparece na palavra a ser adivinhada
+            for (const letter of wordToGuessLower) {
+                letterCount[letter] = (letterCount[letter] || 0) + 1;
+            }
+
+            // Primeiro, verifica letras corretas (verde)
+            for (let i = 0; i < inputs.length; i++) {
+                const letterInput = inputs[i];
+
+                if (guess[i] === wordToGuessLower[i]) {
+                    letterInput.classList.add("correct");
+                    letterCount[guess[i]]--; // Reduz o contador
+                }
+            }
+
+            // Em seguida, verifica letras presentes (amarelo)
+            for (let i = 0; i < inputs.length; i++) {
+                const letterInput = inputs[i];
+                const guessLetter = guess[i];
+
+                if (guessLetter !== wordToGuessLower[i] && wordToGuessLower.includes(guessLetter) && letterCount[guessLetter] > 0) {
+                    letterInput.classList.add("present");
+                    letterCount[guessLetter]--; // Reduz o contador
+                } else if (!letterInput.classList.contains("correct")) {
+                    letterInput.classList.add("absent"); // Adiciona como ausente apenas se não for correta
+                }
+            }
+
+            if (guess === wordToGuessLower) {
+                resultDiv.innerHTML = "Parabéns! Você acertou a palavra: " + wordToGuess + "!";
+                setTimeout(() => {
+                    startGame();
+                }, 5000);
+            } else if (attempts >= maxAttempts) {
+                resultDiv.innerHTML = "Você perdeu! A palavra era: " + wordToGuess + ".";
+                setTimeout(() => {
+                    startGame();
+                }, 5000);
+            }
+        }
+
+        // Inicia o jogo quando a página carrega
+        window.onload = async () => {
+            await startGame();
+            document.addEventListener('keydown', function(event) {
+                if (event.key === "Enter") {
+                    checkGuess();
+                } else if (event.key === "Backspace") {
+                    removeLetter();
+                } else if (event.key.length === 1 && /^[a-zA-Z]$/.test(event.key)) {
+                    addLetter(event.key.toUpperCase());
+                }
+            });
+        };
     </script>
-
 </body>
 </html>
