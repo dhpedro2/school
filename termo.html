@@ -131,14 +131,20 @@
         async function loadWords() {
             const response = await fetch('palavras.txt');
             const text = await response.text();
-            const words = text.split('\n').map(word => word.trim()).filter(word => word.length === 5);
+            // Normaliza as palavras ao carregar
+            const words = text.split('\n').map(word => normalizeWord(word.trim())).filter(word => word.length === 5);
             return words;
+        }
+
+        // Normaliza a palavra para comparação
+        function normalizeWord(word) {
+            return word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
 
         // Função para iniciar o jogo
         async function startGame() {
             validWords = await loadWords();
-            wordToGuess = validWords[Math.floor(Math.random() * validWords.length)].toLowerCase();
+            wordToGuess = validWords[Math.floor(Math.random() * validWords.length)];
             attempts = 0;
             document.getElementById("history").innerHTML = ""; // Limpa o histórico
             document.getElementById("message").innerHTML = "";
@@ -240,8 +246,9 @@
 
         // Função para verificar a tentativa do usuário
         function checkGuess() {
-            const guess = Array.from(document.querySelectorAll(".row:nth-child(" + (attempts + 1) + ") input"))
-                .map(input => input.value.toLowerCase()).join('');
+            const inputs = document.querySelectorAll(".row:nth-child(" + (attempts + 1) + ") input");
+            const guess = Array.from(inputs)
+                .map(input => input.value).join('');
 
             // Verifica se a palavra está no dicionário
             if (guess.length !== 5) {
@@ -249,40 +256,41 @@
                 return;
             }
 
+            // Normaliza a tentativa do usuário
+            const normalizedGuess = normalizeWord(guess);
             // Verifica se a palavra é válida
-            if (!validWords.includes(guess)) {
+            if (!validWords.includes(normalizedGuess)) {
                 alert("Palavra inválida! Tente outra.");
                 return;
             }
 
             attempts++;
             const resultDiv = document.getElementById("message");
-            const inputs = document.querySelectorAll(".row:nth-child(" + attempts + ") input");
+            const inputsRow = document.querySelectorAll(".row:nth-child(" + attempts + ") input");
 
-            const wordToGuessLower = wordToGuess.toLowerCase();
             let letterCount = {};
 
             // Contar quantas vezes cada letra aparece na palavra a ser adivinhada
-            for (const letter of wordToGuessLower) {
+            for (const letter of wordToGuess) {
                 letterCount[letter] = (letterCount[letter] || 0) + 1;
             }
 
             // Primeiro, verifica letras corretas (verde)
-            for (let i = 0; i < inputs.length; i++) {
-                const letterInput = inputs[i];
+            for (let i = 0; i < inputsRow.length; i++) {
+                const letterInput = inputsRow[i];
 
-                if (guess[i] === wordToGuessLower[i]) {
+                if (normalizedGuess[i] === normalizeWord(wordToGuess[i])) {
                     letterInput.classList.add("correct");
-                    letterCount[guess[i]]--; // Reduz o contador
+                    letterCount[normalizedGuess[i]]--; // Reduz o contador
                 }
             }
 
             // Em seguida, verifica letras presentes (amarelo)
-            for (let i = 0; i < inputs.length; i++) {
-                const letterInput = inputs[i];
-                const guessLetter = guess[i];
+            for (let i = 0; i < inputsRow.length; i++) {
+                const letterInput = inputsRow[i];
+                const guessLetter = normalizedGuess[i];
 
-                if (guessLetter !== wordToGuessLower[i] && wordToGuessLower.includes(guessLetter) && letterCount[guessLetter] > 0) {
+                if (guessLetter !== normalizeWord(wordToGuess[i]) && wordToGuess.includes(guessLetter) && letterCount[guessLetter] > 0) {
                     letterInput.classList.add("present");
                     letterCount[guessLetter]--; // Reduz o contador
                 } else if (!letterInput.classList.contains("correct")) {
@@ -290,7 +298,7 @@
                 }
             }
 
-            if (guess === wordToGuessLower) {
+            if (normalizedGuess === normalizeWord(wordToGuess)) {
                 resultDiv.innerHTML = "Parabéns! Você acertou a palavra: " + wordToGuess + "!";
                 setTimeout(() => {
                     startGame();
